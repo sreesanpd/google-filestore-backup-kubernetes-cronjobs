@@ -30,7 +30,13 @@ Once created, you must create a key for the Service Account in JSON format. This
 
 ### GCS - Example Kubernetes Cronjob
 
-An example of how to schedule this container in Kubernetes as a cronjob is below. This would configure a filestore backup to run each day at 01:00am. The GCP Service Account Key is stored in secrets. 
+An example of how to schedule this container in Kubernetes as a cronjob is below. This would configure a filestore backup to run each day at 01:00am. The GCP Service Account Key is stored in secrets. Persistent Volumes (PVs) and Persistent Volume Claims (PVCs) for primary filestore and secondary filestores will be created. 
+
+* replace nfs server with the IP address of each filestore instances
+* replace nfs path with fileshare name of each filestore instances
+* replace gcp_gcloud_auth with base64 encoded service account key
+* replace the docker image url with the image you have built 
+* replace GCP_BUCKET_NAME with the GCS bucket you have created for storing filestore backups
 
 
 ```
