@@ -57,7 +57,6 @@ metadata:
 type: Opaque
 data:
   gcp_gcloud_auth: "<Base64 encoded Service Account Key>"
-#  slack_webhook_url: <Your Slack WebHook URL>
 ---
 apiVersion: batch/v1beta1
 kind: CronJob
@@ -91,11 +90,7 @@ spec:
               - name: FILESHARE_MOUNT_PRIMARY
                 value: "primary-filestore"
               - name: FILESHARE_MOUNT_SECONDARY
-                value: "secondary-filestore"          
-              - name: SLACK_ENABLED
-                value: "false"
-              - name: SLACK_CHANNEL
-                value: "#chatops"
+                value: "secondary-filestore"
           restartPolicy: Never
           volumes:
             - name: primary-filestore
