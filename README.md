@@ -28,4 +28,112 @@ In order to backup to a GCS Bucket, you must create a Service Account in Google 
 Once created, you must create a key for the Service Account in JSON format. This key should then be base64 encoded and set in the `GCP_GCLOUD_AUTH` environment variable. For example, to encode `service_account.json` you would use the command `base64 ~/service-key.json` in your terminal and set the output as the `GCP_GCLOUD_AUTH` environment variable.
 
 
+### GCS - Example Kubernetes Cronjob
 
+An example of how to schedule this container in Kubernetes as a cronjob is below. This would configure a filestore backup to run each day at 01:00am. The GCP Service Account Key is stored in secrets. 
+
+
+```
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: primary-filestore-pv
+spec:
+  storageClassName: primary-filestore
+  capacity:
+    storage: 1000Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: "<IP address of google filestore primary instance>"
+    path: "<fileshare name of the google filestore primary instance>"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: primary-filestore-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: primary-filestore
+  resources:
+    requests:
+      storage: 1000Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: secondary-filestore-pv
+spec:
+  storageClassName: secondary-filestore
+  capacity:
+    storage: 1000Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: "<IP address of google filestore secondary instance>"
+    path: "<fileshare name of the google filestore secondary instance>"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: secondary-filestore-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: secondary-filestore
+  resources:
+    requests:
+      storage: 1000Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: filestore-backup
+type: Opaque
+data:
+  gcp_gcloud_auth: "<Base64 encoded Service Account Key>"
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: filestore-backup
+spec:
+  schedule: "0 01 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: filestore-backup
+            image: "<Docker Image URL>"
+            imagePullPolicy: Always
+            volumeMounts:
+              - name: primary-filestore
+                mountPath: "/mnt/primary-filestore"
+              - name: secondary-filestore
+                mountPath: "/mnt/secondary-filestore"
+            env:
+              - name: GCP_GCLOUD_AUTH
+                valueFrom:
+                   secretKeyRef:
+                     name: filestore-backup
+                     key: gcp_gcloud_auth
+              - name: BACKUP_PROVIDER
+                value: "gcp"
+              - name: GCP_BUCKET_NAME
+                value: "<Name of the GCS Bucket where filestore backups needs to be stored>"
+              - name: FILESHARE_MOUNT_PRIMARY
+                value: "primary-filestore"
+              - name: FILESHARE_MOUNT_SECONDARY
+                value: "secondary-filestore"
+          restartPolicy: Never
+          volumes:
+            - name: primary-filestore
+              persistentVolumeClaim:
+                claimName: primary-filestore-pvc
+            - name: secondary-filestore
+              persistentVolumeClaim:
+                claimName: secondary-filestore-pvc
+
+```
