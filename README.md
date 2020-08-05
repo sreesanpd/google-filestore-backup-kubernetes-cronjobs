@@ -14,6 +14,18 @@ Environment Variables    | Purpose |
 GCP_GCLOUD_AUTH       |  Base64 encoded service account key exported as JSON. Example of how to generate: `base64 ~/service-key.json`                                         |
 BACKUP_PROVIDER       | Backend to use for filestore backups. It will be GCP |
 GCP_BUCKET_NAME       | Name of the Google Cloud Storage (GCS) bucket where filestore backups will be stored |
-FILESHARE_MOUNT_PRIMARY | Mount path for primary filestore in the container. '/mnt/primary-filestore' is the default value. If you want to change it, make necessary changes in volumeMounts under container spec in the kubernetes cronjob spec. Don't change /mnt in the mount path  |
-FILESHARE_MOUNT_SECONDARY |  Mount path for secondary filestore in the container. '/mnt/secondary-filestore' is the default value. If you want to change it, make necessary changes in volumeMounts under container spec in the kubernetes cronjob spec. Don't change /mnt in the mount path   |
+FILESHARE_MOUNT_PRIMARY | Mount path for primary filestore in the container. '/mnt/primary-filestore' is the default location. If you want to change it, make necessary changes in volumeMounts under container spec in the kubernetes cronjob spec. Don't change /mnt in the mount path  |
+FILESHARE_MOUNT_SECONDARY |  Mount path for secondary filestore in the container. '/mnt/secondary-filestore' is the default location. If you want to change it, make necessary changes in volumeMounts under container spec in the kubernetes cronjob spec. Don't change /mnt in the mount path   |
+
+## GCS Backend Configuration
+
+The below subheadings detail how to configure filestore to backup to a Google GCS backend.
+
+### GCS - Configuring the Service Account
+
+In order to backup to a GCS Bucket, you must create a Service Account in Google Cloud Platform that contains the neccesary permissions to write to the destination bucket (for example the `Storage Obect Creator` role).
+
+Once created, you must create a key for the Service Account in JSON format. This key should then be base64 encoded and set in the `GCP_GCLOUD_AUTH` environment variable. For example, to encode `service_account.json` you would use the command `base64 ~/service-key.json` in your terminal and set the output as the `GCP_GCLOUD_AUTH` environment variable.
+
+
 
