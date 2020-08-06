@@ -9,8 +9,8 @@ spec:
   accessModes:
     - ReadWriteMany
   nfs:
-    server: "<IP address of google filestore primary instance>"
-    path: "<fileshare name of the google filestore primary instance>" ## eg: /vol1
+    server: <IP address of google filestore primary instance>
+    path: <fileshare name of the google filestore primary instance> ## eg: /vol1
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -35,8 +35,8 @@ spec:
   accessModes:
     - ReadWriteMany
   nfs:
-    server: "<IP address of google filestore secondary instance>"
-    path: "<fileshare name of the google filestore secondary instance>" ## eg: /vol1
+    server: <IP address of google filestore secondary instance>
+    path: <fileshare name of the google filestore secondary instance> ## eg: /vol1
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -56,7 +56,7 @@ metadata:
   name: filestore-backup
 type: Opaque
 data:
-  gcp_gcloud_auth: "<Base64 encoded Service Account Key>"
+  gcp_gcloud_auth: <Base64 encoded Service Account Key>
 ---
 apiVersion: batch/v1beta1
 kind: CronJob
@@ -70,7 +70,7 @@ spec:
         spec:
           containers:
           - name: filestore-backup
-            image: "<Docker Image URL>"
+            image: <Docker Image URL>
             imagePullPolicy: Always
             volumeMounts:
               - name: primary-filestore
