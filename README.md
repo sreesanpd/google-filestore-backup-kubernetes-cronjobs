@@ -219,7 +219,7 @@ gsutil mb -p $project -c STANDARD -l eu gs://$storagebucket
 gcloud filestore instances create $primaryfilestore --project=$project --zone=europe-north1-b --tier=STANDARD --file-share=name=$primaryfileshare,capacity=1TB --network=name=$vpcname
 ```
 
-**Create Primary Filestore Instance**
+**Create Secondary Filestore Instance**
 
 
 ```
