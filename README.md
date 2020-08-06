@@ -449,3 +449,9 @@ gcloud compute networks delete $vpcname --quiet
 ```
 gcloud iam service-accounts delete $serviceaccount@$project.iam.gserviceaccount.com --quiet
 ```
+
+## TODO
+
+- [ ] replace ubuntu image with alpine linux
+- [ ] integrate Microsoft Teams notifications
+- [ ] integrate slack notifications
