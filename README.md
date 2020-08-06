@@ -345,7 +345,7 @@ kubectl -f kubernetes-resources/filestore-backups-cronjob-sample.yaml
 
 If there is a problem with the cronjob container, you can inspect it by:
 
-1. Add sleep timer to the container by editing google-filestore-backup-kubernetes-cronjobs/docker-resources/resources/filestore-backup.sh
+1. Add sleep timer to the container by editing google-filestore-backup-kubernetes-cronjobs/docker-resources/resources/filestore-backup.sh. Otherwise the container will immediately get deleted after running the job.
 
 ```
 #!/bin/bash
