@@ -43,6 +43,11 @@ An example of how to schedule this container in Kubernetes as a cronjob is below
 
 ```
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: filestore
+---
+apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: primary-filestore-pv
