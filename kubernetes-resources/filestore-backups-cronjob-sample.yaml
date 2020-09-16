@@ -2,6 +2,7 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: primary-filestore-pv
+  namespace: filestore
 spec:
   storageClassName: primary-filestore
   capacity:
@@ -9,13 +10,14 @@ spec:
   accessModes:
     - ReadWriteMany
   nfs:
-    server: <IP address of google filestore primary instance>
-    path: <fileshare name of the google filestore primary instance> ## eg: /vol1
+    server: PRIMARYFILESTOREIP
+    path: /PRIMARYFILESTORESHARE
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: primary-filestore-pvc
+  namespace: filestore
 spec:
   accessModes:
     - ReadWriteMany
@@ -35,8 +37,8 @@ spec:
   accessModes:
     - ReadWriteMany
   nfs:
-    server: <IP address of google filestore secondary instance>
-    path: <fileshare name of the google filestore secondary instance> ## eg: /vol1
+    server: SECONDARYFILESTOREIP
+    path: /SECONDARYFILESTORESHARE
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -51,26 +53,63 @@ spec:
       storage: 1000Gi
 ---
 apiVersion: v1
-kind: Secret
+kind: ServiceAccount
 metadata:
-  name: filestore-backup
-type: Opaque
-data:
-  gcp_gcloud_auth: <Base64 encoded Service Account Key>
+  annotations:
+    iam.gke.io/gcp-service-account: SERVICEACCOUNT@PROJECT.iam.gserviceaccount.com
+  name: filestore-gcs-backup
+  namespace: filestore
 ---
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: filestore-backup
+  name: filestore-gcs-backup
+  namespace: filestore
 spec:
-  schedule: "0 01 * * *"
+  schedule: "0 1 * * *"
   jobTemplate:
     spec:
       template:
         spec:
           containers:
-          - name: filestore-backup
-            image: <Docker Image URL>
+          - name: filestore-gcs-backup
+            image: gcr.io/PROJECT/filestore-gcs-backup
+            imagePullPolicy: Always
+            volumeMounts:
+              - name: primary-filestore
+                mountPath: "/mnt/primary-filestore"
+            env:
+              - name: BACKUP_PROVIDER
+                value: "gcp"
+              - name: GCP_BUCKET_NAME
+                value: "GCSBUCKET"
+              - name: FILESHARE_MOUNT_PRIMARY
+                value: "primary-filestore"        
+              - name: SLACK_ENABLED
+                value: "false"
+              - name: SLACK_CHANNEL
+                value: "#chatops"
+          restartPolicy: Never
+          volumes:
+            - name: primary-filestore
+              persistentVolumeClaim:
+                claimName: primary-filestore-pvc
+          serviceAccountName: filestore-gcs-backup
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: filestore-sync
+  namespace: filestore
+spec:
+  schedule: "* */3 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: filestore-sync
+            image: gcr.io/PROJECT/filestore-sync:latest
             imagePullPolicy: Always
             volumeMounts:
               - name: primary-filestore
@@ -78,19 +117,16 @@ spec:
               - name: secondary-filestore
                 mountPath: "/mnt/secondary-filestore"
             env:
-              - name: GCP_GCLOUD_AUTH
-                valueFrom:
-                   secretKeyRef:
-                     name: filestore-backup
-                     key: gcp_gcloud_auth
               - name: BACKUP_PROVIDER
                 value: "gcp"
-              - name: GCP_BUCKET_NAME
-                value: "<Name of the GCS Bucket where filestore backups needs to be stored>"
               - name: FILESHARE_MOUNT_PRIMARY
                 value: "primary-filestore"
               - name: FILESHARE_MOUNT_SECONDARY
-                value: "secondary-filestore"
+                value: "secondary-filestore"          
+              - name: SLACK_ENABLED
+                value: "false"
+              - name: SLACK_CHANNEL
+                value: "#chatops"
           restartPolicy: Never
           volumes:
             - name: primary-filestore

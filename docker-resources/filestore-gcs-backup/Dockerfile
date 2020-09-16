@@ -1,15 +1,26 @@
-# Set the base image
-FROM ubuntu
+#Set the base image
+FROM alpine:3.11
 
-RUN \
-  sed -i 's/# \(.*multiverse$\)/\1/g' /etc/apt/sources.list && \
-  apt-get update && \
-  apt-get install -y python3 bash rsync curl gzip coreutils nfs-common net-tools telnet && \
-  rm -rf /var/lib/apt/lists/*
+RUN apk -v --update add \
+        python3 \
+        bash \
+        rsync \
+        curl \
+        gzip \
+        coreutils \
+        libc6-compat \
+        groff \
+        less \
+        gnupg \
+        nfs-utils \
+        rpcbind \
+        && \
+    rm /var/cache/apk/*
 
 # Set Default Environment Variables
 ENV CLOUD_SDK_VERSION=285.0.1
 ENV BACKUP_PROVIDER=gcp
+
 
 # Set Google Cloud SDK Path
 ENV PATH /google-cloud-sdk/bin:$PATH
@@ -23,10 +34,7 @@ RUN curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cl
     gcloud config set metrics/environment github_docker_image && \
     gcloud --version
 
-
 # Copy backup script and execute
 COPY resources/filestore-backup.sh /
 RUN chmod +x /filestore-backup.sh
 CMD ["bash", "/filestore-backup.sh"]
-
-
